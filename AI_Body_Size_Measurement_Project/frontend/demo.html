@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Body Measurement System - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online {
+            background: #10b981;
+        }
+
+        .status-offline {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            color: #555;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list li:before {
+            content: "✓ ";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 10px 5px;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .api-response {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .api-response.show {
+            display: block;
+        }
+
+        .api-response pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .endpoint-info {
+            background: #e0e7ff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 AI Body Measurement System</h1>
+            <p class="subtitle">Gender-Specific Body Measurement with AI</p>
+        </header>
+
+        <div class="status-card">
+            <h3>
+                <span class="status-indicator status-online" id="statusIndicator"></span>
+                Backend API Status: <span id="statusText">Checking...</span>
+            </h3>
+            <div class="endpoint-info">
+                Backend URL: <strong>http://localhost:8000</strong>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>📋 System Features</h3>
+                <ul class="feature-list">
+                    <li>Gender-specific measurements</li>
+                    <li>AI-powered pose detection</li>
+                    <li>Size recommendations</li>
+                    <li>Measurement history</li>
+                    <li>Multi-profile support</li>
+                    <li>Brand size mapping</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>🔧 API Endpoints</h3>
+                <button class="btn" onclick="testEndpoint('/')">Test Root</button>
+                <button class="btn" onclick="testEndpoint('/health')">Health Check</button>
+                <button class="btn" onclick="testEndpoint('/api/test')">Test Features</button>
+                <button class="btn" onclick="openDocs()">API Docs</button>
+                <div id="apiResponse" class="api-response"></div>
+            </div>
+
+            <div class="card">
+                <h3>📊 Measurement Types</h3>
+                <p><strong>Male Measurements:</strong></p>
+                <ul class="feature-list">
+                    <li>Height, Chest, Waist</li>
+                    <li>Hip, Shoulder Width</li>
+                    <li>Inseam, Outseam</li>
+                </ul>
+                <p style="margin-top: 15px;"><strong>Female Measurements:</strong></p>
+                <ul class="feature-list">
+                    <li>Height, Bust, Under-bust</li>
+                    <li>Waist, Hip</li>
+                    <li>Shoulder Width</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>🚀 Quick Links</h3>
+                <button class="btn" onclick="window.open('http://localhost:8000/docs', '_blank')">
+                    Swagger UI
+                </button>
+                <button class="btn" onclick="window.open('http://localhost:8000/redoc', '_blank')">
+                    ReDoc
+                </button>
+                <button class="btn" onclick="window.open('http://localhost:8000/health', '_blank')">
+                    Health Status
+                </button>
+            </div>
+        </div>
+
+        <footer>
+            <p>AI-Based Body Size Measurement System v1.0.0</p>
+            <p>Backend: FastAPI | Frontend: HTML/CSS/JavaScript | AI: MediaPipe</p>
+        </footer>
+    </div>
+
+    <script>
+        // Check backend status on load
+        async function checkBackendStatus() {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    statusIndicator.className = 'status-indicator status-online';
+                    statusText.textContent = 'Online and Healthy ✓';
+                    statusText.style.color = '#10b981';
+                } else {
+                    throw new Error('Unhealthy');
+                }
+            } catch (error) {
+                statusIndicator.className = 'status-indicator status-offline';
+                statusText.textContent = 'Offline or Not Responding ✗';
+                statusText.style.color = '#ef4444';
+            }
+        }
+
+        // Test API endpoint
+        async function testEndpoint(endpoint) {
+            const responseDiv = document.getElementById('apiResponse');
+            responseDiv.innerHTML = '<div class="loading"></div> Loading...';
+            responseDiv.classList.add('show');
+
+            try {
+                const response = await fetch(`http://localhost:8000${endpoint}`);
+                const data = await response.json();
+                
+                responseDiv.innerHTML = `
+                    <strong>Endpoint:</strong> ${endpoint}<br>
+                    <strong>Status:</strong> ${response.status} ${response.statusText}<br>
+                    <strong>Response:</strong><br>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                responseDiv.innerHTML = `
+                    <strong>Error:</strong><br>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+
+        // Open API documentation
+        function openDocs() {
+            window.open('http://localhost:8000/docs', '_blank');
+        }
+
+        // Check status on page load
+        checkBackendStatus();
+        
+        // Refresh status every 10 seconds
+        setInterval(checkBackendStatus, 10000);
+    </script>
+</body>
+</html>
